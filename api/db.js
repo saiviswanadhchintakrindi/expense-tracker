@@ -22,8 +22,10 @@ function getDb() {
     if (serviceAccount.private_key && serviceAccount.private_key.includes('\\n')) {
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     }
-    if (!admin.apps.length) {
+    try {
       admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    } catch (e) {
+      if (!e.message?.includes('already exists')) throw e;
     }
     db = admin.firestore();
     db.settings({ ignoreUndefinedProperties: true });
