@@ -4,6 +4,7 @@ import ExpenseForm from './components/ExpenseForm'
 import ExpenseList from './components/ExpenseList'
 import SummaryDashboard from './components/SummaryDashboard'
 import ManagePanel from './components/ManagePanel'
+import DatabaseViewer from './components/DatabaseViewer'
 import ReminderPopup, { useReminder } from './components/ReminderBanner'
 import useData from './useData'
 
@@ -90,6 +91,7 @@ export default function App() {
             onAddSource={addSource} onDeleteSource={deleteSource} onRefreshSources={() => {}}
           />
         )}
+        {tab === 'db' && <DatabaseViewer />}
       </div>
       <ReminderPopup show={reminderShow} reminderData={reminderData} onDismiss={dismissReminder} />
       {toast && <div className={`toast ${toast.isError ? 'error' : ''}`}>{toast.message}</div>}

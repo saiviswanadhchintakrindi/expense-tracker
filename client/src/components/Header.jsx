@@ -13,7 +13,8 @@ export default function Header({ tab, onTabChange, onBellClick, reminderTotal, d
     { key: 'add', label: 'Add' },
     { key: 'list', label: 'Expenses' },
     { key: 'summary', label: 'Summary' },
-    { key: 'manage', label: 'Manage' }
+    { key: 'manage', label: 'Manage' },
+    { key: 'db', label: 'DB' }
   ]
 
   return (

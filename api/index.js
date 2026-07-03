@@ -201,4 +201,17 @@ app.get('/api/summary', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── Admin: Browse Database ──
+app.get('/api/admin/data', async (req, res) => {
+  try {
+    const { collection } = req.query;
+    if (!collection) return res.status(400).json({ error: 'collection query param required' });
+    if (!['people', 'sources', 'expenses', 'payments'].includes(collection)) {
+      return res.status(400).json({ error: 'Invalid collection' });
+    }
+    const data = await db.collection(collection);
+    res.json(data);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 module.exports = app;
