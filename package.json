@@ -1,0 +1,19 @@
+{
+  "name": "credit-card-expense-tracker",
+  "version": "1.0.0",
+  "description": "Track expenses made using a single credit card by multiple people",
+  "scripts": {
+    "server": "node server/index.js",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "node server/index.js",
+    "setup": "npm install && cd client && npm install"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.38.0",
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "firebase-admin": "^14.1.0"
+  }
+}

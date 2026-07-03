@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "buildCommand": "cd client && npm install && npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": "client/dist",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/((?!assets/|icon-|manifest|sw\\.).*)", "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/index.js": {
+      "memory": 256,
+      "maxDuration": 10
+    }
+  }
+}

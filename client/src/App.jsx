@@ -1,0 +1,98 @@
+import { useState, useEffect, useRef } from 'react'
+import Header from './components/Header'
+import ExpenseForm from './components/ExpenseForm'
+import ExpenseList from './components/ExpenseList'
+import SummaryDashboard from './components/SummaryDashboard'
+import ManagePanel from './components/ManagePanel'
+import ReminderPopup, { useReminder } from './components/ReminderBanner'
+import useData from './useData'
+
+const TABS = ['add', 'list', 'summary', 'manage']
+
+export default function App() {
+  const [tab, setTab] = useState('add')
+  const [dir, setDir] = useState(0)
+  const [slide, setSlide] = useState(false)
+  const [dark, setDark] = useState(() => {
+    try { return localStorage.getItem('theme') === 'dark' } catch { return false }
+  })
+  const touchStart = useRef(null)
+
+  const {
+    expenses, people, sources, summary, toast,
+    filterPerson, filterSource,
+    setFilterPerson, setFilterSource,
+    addExpense, deleteExpense, recordPayment,
+    addPerson, deletePerson, addSource, deleteSource,
+    syncFromServer
+  } = useData()
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light') } catch {}
+  }, [dark])
+
+  const toggleTheme = () => setDark(d => !d)
+
+  const navigate = (newTab) => {
+    const curIdx = TABS.indexOf(tab)
+    const newIdx = TABS.indexOf(newTab)
+    if (newIdx < 0) return
+    setDir(newIdx > curIdx ? 1 : -1)
+    setSlide(true)
+    setTimeout(() => { setTab(newTab); setSlide(false) }, 200)
+  }
+
+  const handleTouchStart = (e) => { touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY } }
+  const handleTouchEnd = (e) => {
+    if (!touchStart.current) return
+    const dx = e.changedTouches[0].clientX - touchStart.current.x
+    const dy = e.changedTouches[0].clientY - touchStart.current.y
+    touchStart.current = null
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return
+    const idx = TABS.indexOf(tab)
+    if (dx < 0 && idx < TABS.length - 1) navigate(TABS[idx + 1])
+    else if (dx > 0 && idx > 0) navigate(TABS[idx - 1])
+  }
+
+  const { show: reminderShow, reminderData, dismiss: dismissReminder, openPopup } = useReminder()
+
+  const slideStyle = {
+    animation: slide ? `${dir > 0 ? 'slideLeftIn' : 'slideRightIn'} 0.2s ease` : 'none',
+    transform: 'translateX(0)'
+  }
+
+  return (
+    <>
+      <Header
+        tab={tab} onTabChange={navigate} onBellClick={openPopup}
+        reminderTotal={reminderData?.total || 0}
+        dark={dark} onToggleTheme={toggleTheme}
+        onSync={syncFromServer}
+      />
+      <div ref={null} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={slideStyle}>
+        {tab === 'add' && <ExpenseForm people={people} sources={sources} onSubmit={addExpense} />}
+        {tab === 'list' && (
+          <ExpenseList
+            expenses={expenses} people={people} loading={false}
+            filterPerson={filterPerson} onFilterChange={setFilterPerson}
+            filterSource={filterSource} onSourceFilterChange={setFilterSource}
+            sources={sources} onDelete={deleteExpense} onPay={recordPayment}
+          />
+        )}
+        {tab === 'summary' && (
+          <SummaryDashboard summary={summary} filterSource={filterSource} onSourceFilterChange={setFilterSource} sources={sources} />
+        )}
+        {tab === 'manage' && (
+          <ManagePanel
+            people={people} sources={sources}
+            onAddPerson={addPerson} onDeletePerson={deletePerson} onRefreshPeople={() => {}}
+            onAddSource={addSource} onDeleteSource={deleteSource} onRefreshSources={() => {}}
+          />
+        )}
+      </div>
+      <ReminderPopup show={reminderShow} reminderData={reminderData} onDismiss={dismissReminder} />
+      {toast && <div className={`toast ${toast.isError ? 'error' : ''}`}>{toast.message}</div>}
+    </>
+  )
+}

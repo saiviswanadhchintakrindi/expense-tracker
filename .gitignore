@@ -1,0 +1,9 @@
+node_modules/
+server/data.json
+server/data.json-*
+server/expenses.db*
+/tmp/
+.DS_Store
+functions/node_modules/
+.firebase/
+*-debug.log
