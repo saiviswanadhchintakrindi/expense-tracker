@@ -100,26 +100,6 @@ async function collection(name) {
   return (data.documents || []).map(fromDoc);
 }
 
-async function queryCollection(name, field, op, value) {
-  const body = {
-    structuredQuery: {
-      from: [{ collectionId: name }],
-      where: { fieldFilter: { field: { fieldPath: field }, op, value: { stringValue: value } } }
-    }
-  };
-  const data = await firestore('POST', `/${name}:runQuery`, body);
-  return (data || []).filter(d => d.document).map(d => fromDoc(d.document));
-}
-
-async function queryAll(name, filters, orderBy, orderDir) {
-  const where = { compositeFilter: { op: 'AND', filters: filters.map(f => ({ fieldFilter: { field: { fieldPath: f.field }, op: f.op, value: { stringValue: f.value } } })) } };
-  const body = { structuredQuery: { from: [{ collectionId: name }] } };
-  if (filters.length > 0) body.structuredQuery.where = where;
-  if (orderBy) body.structuredQuery.orderBy = [{ field: { fieldPath: orderBy }, direction: orderDir || 'DESCENDING' }];
-  const data = await firestore('POST', `/${name}:runQuery`, body);
-  return (data || []).filter(d => d.document).map(d => fromDoc(d.document));
-}
-
 async function getDoc(collectionName, docId) {
   try {
     const data = await firestore('GET', `/${collectionName}/${docId}`);
@@ -155,14 +135,6 @@ async function addSubDoc(parentCol, parentId, subCol, obj) {
   await firestore('POST', `/${parentCol}/${parentId}/${subCol}`, body);
 }
 
-async function deleteCollection(collectionName) {
-  const docs = await firestore('GET', `/${collectionName}`);
-  if (!docs.documents) return;
-  for (const doc of docs.documents) {
-    await firestore('DELETE', `/${doc.name.split('/').slice(-2).join('/')}`);
-  }
-}
-
 async function setDoc(collectionName, docId, obj) {
   const body = { fields: toFields(obj) };
   await firestore('POST', `/${collectionName}?documentId=${encodeURIComponent(docId)}`, body);
@@ -170,6 +142,6 @@ async function setDoc(collectionName, docId, obj) {
 }
 
 module.exports = {
-  collection, queryCollection, queryAll, getDoc, addDoc, updateDoc, deleteDoc,
-  listSubcollection, addSubDoc, setDoc, getConfig, PROJECT
+  collection, getDoc, addDoc, updateDoc, deleteDoc,
+  listSubcollection, addSubDoc, setDoc, getConfig
 };
