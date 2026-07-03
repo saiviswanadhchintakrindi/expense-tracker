@@ -94,12 +94,11 @@ app.delete('/api/sources/:id', async (req, res) => {
 app.get('/api/expenses', async (req, res) => {
   try {
     const { person, source_type, sort } = req.query;
-    const filters = [];
-    if (person) filters.push({ field: 'person', op: 'EQUAL', value: person });
-    if (source_type) filters.push({ field: 'source_type', op: 'EQUAL', value: source_type });
-    const orderField = sort === 'amount' ? 'amount' : 'created_at';
-    const orderDir = sort === 'amount' ? 'DESCENDING' : 'DESCENDING';
-    const data = await db.queryAll('expenses', filters, orderField, orderDir);
+    let data = await db.collection('expenses');
+    if (person) data = data.filter(e => e.person === person);
+    if (source_type) data = data.filter(e => e.source_type === source_type);
+    if (sort === 'amount') data.sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
+    else data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     res.json(data);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -163,8 +162,8 @@ app.delete('/api/expenses/:id', async (req, res) => {
 app.get('/api/summary', async (req, res) => {
   try {
     const { source_type } = req.query;
-    const filters = source_type ? [{ field: 'source_type', op: 'EQUAL', value: source_type }] : [];
-    const expenses = await db.queryAll('expenses', filters, 'created_at', 'DESCENDING');
+    let expenses = await db.collection('expenses');
+    if (source_type) expenses = expenses.filter(e => e.source_type === source_type);
     if (!expenses.length) return res.json({ summary: [], expensesByPerson: {}, grand_total: 0, paid_total: 0, remaining_total: 0 });
 
     const expensesByPerson = {};

@@ -28,11 +28,18 @@ export default function useData() {
         fetch(`${API}/sources`),
         fetch(`${API}/summary?${params}`)
       ])
-      setExpenses(await eRes.json())
-      setPeople(await pRes.json())
-      setSources(await sRes.json())
-      setSummary(await sumRes.json())
-    } catch {}
+
+      const [expData, pplData, srcData, sumData] = await Promise.all([
+        eRes.json(), pRes.json(), sRes.json(), sumRes.json()
+      ])
+
+      if (Array.isArray(expData)) setExpenses(expData)
+      if (Array.isArray(pplData)) setPeople(pplData)
+      if (Array.isArray(srcData)) setSources(srcData)
+      if (sumData && typeof sumData === 'object') setSummary(sumData)
+    } catch (e) {
+      console.error('fetchAll error:', e)
+    }
   }, [])
 
   useEffect(() => { fetchAll(filterPerson, filterSource) }, [fetchAll, filterPerson, filterSource])
