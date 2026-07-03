@@ -75,7 +75,10 @@ function fromDoc(doc) {
   for (const [k, v] of Object.entries(fields)) {
     if (v.integerValue !== undefined) result[k] = parseInt(v.integerValue);
     else if (v.doubleValue !== undefined) result[k] = v.doubleValue;
-    else if (v.stringValue !== undefined) result[k] = v.stringValue;
+    else if (v.stringValue !== undefined) {
+      const s = v.stringValue;
+      result[k] = !isNaN(s) && s !== '' ? parseFloat(s) : s;
+    }
     else if (v.booleanValue !== undefined) result[k] = v.booleanValue;
     else if (v.timestampValue !== undefined) result[k] = v.timestampValue;
     else if (v.nullValue !== undefined) result[k] = null;
@@ -87,7 +90,7 @@ function toFields(obj) {
   const fields = {};
   for (const [k, v] of Object.entries(obj)) {
     if (v === null || v === undefined) fields[k] = { nullValue: null };
-    else if (typeof v === 'number') fields[k] = Number.isInteger(v) ? { integerValue: v } : { doubleValue: v };
+    else if (typeof v === 'number' && !isNaN(v)) fields[k] = { doubleValue: v };
     else if (typeof v === 'boolean') fields[k] = { booleanValue: v };
     else if (typeof v === 'string') fields[k] = { stringValue: v };
     else fields[k] = { stringValue: String(v) };

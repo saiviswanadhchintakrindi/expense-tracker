@@ -112,7 +112,7 @@ app.post('/api/expenses', async (req, res) => {
     const pCheck = await db.getDoc('people', person);
     if (!pCheck) return res.status(400).json({ error: 'Invalid person: ' + person });
     const expense = {
-      person, amount: String(parseFloat(amount)), paid_amount: '0',
+      person, amount: parseFloat(amount), paid_amount: 0,
       description, notes: notes || '',
       source_type: source_type || 'credit_card', source_name: source_name || '',
       created_at: new Date().toISOString()
@@ -132,8 +132,8 @@ app.post('/api/expenses/:id/pay', async (req, res) => {
     const expPaid = parseFloat(exp.paid_amount || '0');
     const remaining = expAmt - expPaid;
     if (amount > remaining) return res.status(400).json({ error: `Exceeds ₹${remaining.toFixed(2)}` });
-    await db.updateDoc('expenses', req.params.id, { ...exp, paid_amount: String(expPaid + parseFloat(amount)) });
-    await db.addSubDoc('expenses', req.params.id, 'payments', { amount: String(parseFloat(amount)), paid_at: new Date().toISOString() });
+    await db.updateDoc('expenses', req.params.id, { ...exp, paid_amount: expPaid + parseFloat(amount) });
+    await db.addSubDoc('expenses', req.params.id, 'payments', { amount: parseFloat(amount), paid_at: new Date().toISOString() });
     const updated = await db.getDoc('expenses', req.params.id);
     res.json({ ...updated, amount: parseFloat(updated.amount), paid_amount: parseFloat(updated.paid_amount || '0') });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -145,7 +145,7 @@ app.put('/api/expenses/:id', async (req, res) => {
     if (!exp) return res.status(404).json({ error: 'Not found' });
     const { person, amount, description, notes } = req.body;
     if (person) exp.person = person;
-    if (amount !== undefined) exp.amount = String(parseFloat(amount));
+    if (amount !== undefined) exp.amount = parseFloat(amount);
     if (description) exp.description = description;
     if (notes !== undefined) exp.notes = notes;
     await db.updateDoc('expenses', req.params.id, exp);
