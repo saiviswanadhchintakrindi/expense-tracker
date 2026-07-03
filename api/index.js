@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { getDb, getFieldValue } = require('./db');
+const { getDb, getFieldValue, getInitError } = require('./db');
 
 const app = express();
 app.use(cors());
@@ -21,7 +21,7 @@ app.get('/api/health', async (_req, res) => {
     if (!db) return res.status(503).json({
       error: 'DB not configured',
       hasEnv: !!(process.env.FIREBASE_SERVICE_ACCOUNT),
-      envLen: (process.env.FIREBASE_SERVICE_ACCOUNT || '').length
+      initError: getInitError()
     });
     const snap = await db.collection('people').limit(1).get();
     res.json({ ok: true, people: snap.size });

@@ -3,14 +3,15 @@ const admin = require('firebase-admin');
 let db = null;
 let initialized = false;
 
+let initError = null;
+
 function getDb() {
   if (db) return db;
-  if (initialized) return null;
+  if (initError) return null;
 
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT || process.env.FIREBASE_CONFIG;
   if (!raw) {
-    console.error('FIREBASE_SERVICE_ACCOUNT not set');
-    initialized = true;
+    initError = 'FIREBASE_SERVICE_ACCOUNT not set';
     return null;
   }
 
@@ -26,11 +27,12 @@ function getDb() {
     db.settings({ ignoreUndefinedProperties: true });
     return db;
   } catch (e) {
-    console.error('Firebase init error:', e.message);
-    initialized = true;
+    initError = e.message;
     return null;
   }
 }
+
+module.exports = { getDb, getFieldValue, getInitError: () => initError };
 
 function getFieldValue() {
   return admin.firestore.FieldValue;
