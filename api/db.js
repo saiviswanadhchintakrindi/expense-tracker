@@ -1,9 +1,11 @@
 const admin = require('firebase-admin');
 
 let db = null;
-let initialized = false;
-
 let initError = null;
+
+function getFieldValue() {
+  return admin.firestore.FieldValue;
+}
 
 function getDb() {
   if (db) return db;
@@ -32,10 +34,6 @@ function getDb() {
   }
 }
 
-module.exports = { getDb, getFieldValue, getInitError: () => initError };
+function getInitError() { return initError; }
 
-function getFieldValue() {
-  return admin.firestore.FieldValue;
-}
-
-module.exports = { getDb, getFieldValue };
+module.exports = { getDb, getFieldValue, getInitError };
