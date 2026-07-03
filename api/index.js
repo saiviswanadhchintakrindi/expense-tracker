@@ -173,10 +173,11 @@ app.get('/api/summary', async (req, res) => {
     for (const e of expenses) {
       e.amount = parseFloat(e.amount);
       e.paid_amount = parseFloat(e.paid_amount || '0');
-      if (!byPerson[e.person]) byPerson[e.person] = { total: 0, paid: 0, count: 0 };
+      if (!byPerson[e.person]) byPerson[e.person] = { total: 0, paid: 0, count: 0, latest: '1970-01-01' };
       byPerson[e.person].total += e.amount;
       byPerson[e.person].paid += e.paid_amount;
       byPerson[e.person].count++;
+      if (e.created_at > byPerson[e.person].latest) byPerson[e.person].latest = e.created_at;
       if (!expensesByPerson[e.person]) expensesByPerson[e.person] = [];
       expensesByPerson[e.person].push(e);
     }
@@ -193,8 +194,9 @@ app.get('/api/summary', async (req, res) => {
     const summary = Object.entries(byPerson).map(([person, d]) => ({
       person, expense_count: d.count,
       total_amount: +d.total.toFixed(2), paid_amount: +d.paid.toFixed(2),
-      remaining: +(d.total - d.paid).toFixed(2)
-    })).sort((a, b) => b.remaining - a.remaining);
+      remaining: +(d.total - d.paid).toFixed(2),
+      latest: d.latest
+    })).sort((a, b) => new Date(b.latest) - new Date(a.latest));
 
     const grand = +expenses.reduce((s, e) => s + e.amount, 0).toFixed(2);
     const paid = +expenses.reduce((s, e) => s + e.paid_amount, 0).toFixed(2);
