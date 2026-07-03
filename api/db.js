@@ -5,18 +5,21 @@ let db = null;
 function getDb() {
   if (db) return db;
 
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT || process.env.FIREBASE_CONFIG;
-
-  if (!serviceAccount) {
-    console.error('FIREBASE_SERVICE_ACCOUNT env var not set');
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT || process.env.FIREBASE_CONFIG;
+  if (!raw) {
+    console.error('FIREBASE_SERVICE_ACCOUNT not set');
     return null;
   }
 
   try {
-    const cred = JSON.parse(serviceAccount);
-    admin.initializeApp({ credential: admin.credential.cert(cred) });
-  } catch {
-    admin.initializeApp({ credential: admin.credential.applicationDefault() });
+    const serviceAccount = JSON.parse(raw);
+    if (serviceAccount.private_key && serviceAccount.private_key.includes('\\n')) {
+      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    }
+    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+  } catch (e) {
+    console.error('Firebase init error:', e.message);
+    return null;
   }
 
   db = admin.firestore();
