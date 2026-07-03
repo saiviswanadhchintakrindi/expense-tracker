@@ -8,7 +8,7 @@ import CalendarView from './components/CalendarView'
 import ReminderPopup, { useReminder } from './components/ReminderBanner'
 import useData from './useData'
 
-const TABS = ['add', 'calendar', 'list', 'summary', 'manage']
+const TABS = ['add', 'list', 'summary', 'manage']
 
 export default function App() {
   const [tab, setTab] = useState('add')
@@ -17,6 +17,7 @@ export default function App() {
   const [dark, setDark] = useState(() => {
     try { return localStorage.getItem('theme') === 'dark' } catch { return false }
   })
+  const [showCalendar, setShowCalendar] = useState(false)
   const touchStart = useRef(null)
 
   const {
@@ -70,6 +71,7 @@ export default function App() {
         reminderTotal={reminderData?.total || 0}
         dark={dark} onToggleTheme={toggleTheme}
         onSync={syncFromServer}
+        onCalendarClick={() => setShowCalendar(true)}
       />
       <div ref={null} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={slideStyle}>
         {tab === 'add' && <ExpenseForm people={people} sources={sources} onSubmit={addExpense} />}
@@ -81,7 +83,6 @@ export default function App() {
             sources={sources} onDelete={deleteExpense} onPay={recordPayment}
           />
         )}
-        {tab === 'calendar' && <CalendarView expenses={expenses} />}
         {tab === 'summary' && (
           <SummaryDashboard summary={summary} filterSource={filterSource} onSourceFilterChange={setFilterSource} sources={sources} />
         )}
@@ -93,6 +94,16 @@ export default function App() {
           />
         )}
       </div>
+      {showCalendar && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 998, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '60px 16px 16px', overflow: 'auto' }} onClick={(e) => { if (e.target === e.currentTarget) setShowCalendar(false) }}>
+          <div style={{ maxWidth: 500, width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+              <button onClick={() => setShowCalendar(false)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
+            <CalendarView expenses={expenses} />
+          </div>
+        </div>
+      )}
       <ReminderPopup show={reminderShow} reminderData={reminderData} onDismiss={dismissReminder} />
       {toast && <div className={`toast ${toast.isError ? 'error' : ''}`}>{toast.message}</div>}
     </>
