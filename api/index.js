@@ -54,8 +54,9 @@ app.post('/api/people', async (req, res) => {
 
 app.delete('/api/people/:name', async (req, res) => {
   try {
-    const expenses = await db.queryCollection('expenses', 'person', 'EQUAL', req.params.name);
-    if (expenses.length > 0) return res.status(400).json({ error: 'Has expenses' });
+    const allExpenses = await db.collection('expenses');
+    const hasExpenses = allExpenses.some(e => e.person === req.params.name);
+    if (hasExpenses) return res.status(400).json({ error: 'Has expenses' });
     await db.deleteDoc('people', req.params.name);
     res.json({ message: 'Removed' });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -83,8 +84,9 @@ app.delete('/api/sources/:id', async (req, res) => {
   try {
     const src = await db.getDoc('sources', req.params.id);
     if (!src) return res.status(404).json({ error: 'Not found' });
-    const expenses = await db.queryCollection('expenses', 'source_name', 'EQUAL', src.name);
-    if (expenses.length > 0) return res.status(400).json({ error: 'Has expenses' });
+    const allExpenses = await db.collection('expenses');
+    const hasExpenses = allExpenses.some(e => e.source_name === src.name);
+    if (hasExpenses) return res.status(400).json({ error: 'Has expenses' });
     await db.deleteDoc('sources', req.params.id);
     res.json({ message: 'Removed' });
   } catch (e) { res.status(500).json({ error: e.message }); }
