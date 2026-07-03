@@ -24,11 +24,13 @@ app.get('/api/health', async (_req, res) => {
     const people = await db.collection('people');
     if (people.length === 0) {
       for (const p of ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'])
-        await db.addDoc('people', { name: p });
+        await db.setDoc('people', p, { name: p });
       await db.addDoc('sources', { name: 'HDFC Credit Card', source_type: 'credit_card' });
       await db.addDoc('sources', { name: 'SBI Bank Account', source_type: 'bank' });
     }
-  } catch {}
+  } catch (e) {
+    console.error('Seed error:', e.message);
+  }
 })();
 
 // ── People ──
@@ -45,7 +47,7 @@ app.post('/api/people', async (req, res) => {
     if (!name || !name.trim()) return res.status(400).json({ error: 'Name required' });
     const existing = await db.getDoc('people', name.trim());
     if (existing) return res.status(409).json({ error: 'Already exists' });
-    await db.addDoc('people', { name: name.trim() });
+    await db.setDoc('people', name.trim(), { name: name.trim() });
     res.status(201).json({ name: name.trim() });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

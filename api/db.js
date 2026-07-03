@@ -158,7 +158,13 @@ async function deleteCollection(collectionName) {
   }
 }
 
+async function setDoc(collectionName, docId, obj) {
+  const body = { fields: toFields(obj) };
+  await firestore('POST', `/${collectionName}?documentId=${encodeURIComponent(docId)}`, body);
+  return { id: docId, ...obj };
+}
+
 module.exports = {
   collection, queryCollection, queryAll, getDoc, addDoc, updateDoc, deleteDoc,
-  listSubcollection, addSubDoc, getConfig, PROJECT
+  listSubcollection, addSubDoc, setDoc, getConfig, PROJECT
 };
