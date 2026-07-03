@@ -4,10 +4,11 @@ import ExpenseForm from './components/ExpenseForm'
 import ExpenseList from './components/ExpenseList'
 import SummaryDashboard from './components/SummaryDashboard'
 import ManagePanel from './components/ManagePanel'
+import CalendarView from './components/CalendarView'
 import ReminderPopup, { useReminder } from './components/ReminderBanner'
 import useData from './useData'
 
-const TABS = ['add', 'list', 'summary', 'manage']
+const TABS = ['add', 'calendar', 'list', 'summary', 'manage']
 
 export default function App() {
   const [tab, setTab] = useState('add')
@@ -80,6 +81,7 @@ export default function App() {
             sources={sources} onDelete={deleteExpense} onPay={recordPayment}
           />
         )}
+        {tab === 'calendar' && <CalendarView expenses={expenses} />}
         {tab === 'summary' && (
           <SummaryDashboard summary={summary} filterSource={filterSource} onSourceFilterChange={setFilterSource} sources={sources} />
         )}

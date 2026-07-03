@@ -11,6 +11,7 @@ export default function Header({ tab, onTabChange, onBellClick, reminderTotal, d
   }
   const tabs = [
     { key: 'add', label: 'Add' },
+    { key: 'calendar', label: 'Calendar' },
     { key: 'list', label: 'Expenses' },
     { key: 'summary', label: 'Summary' },
     { key: 'manage', label: 'Manage' }
