@@ -121,8 +121,13 @@ async function queryAll(name, filters, orderBy, orderDir) {
 }
 
 async function getDoc(collectionName, docId) {
-  const data = await firestore('GET', `/${collectionName}/${docId}`);
-  return data ? fromDoc(data) : null;
+  try {
+    const data = await firestore('GET', `/${collectionName}/${docId}`);
+    return data ? fromDoc(data) : null;
+  } catch (e) {
+    if (e.message?.includes('404') || e.message?.includes('NOT_FOUND')) return null;
+    throw e;
+  }
 }
 
 async function addDoc(collectionName, obj) {
