@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { getDb, FieldValue, Timestamp } = require('./db');
+const { getDb, getFieldValue } = require('./db');
 
 const app = express();
 app.use(cors());
@@ -14,14 +14,20 @@ function serialize(doc) {
   return result;
 }
 
-// ── Health ──
+// ── Health / Debug ──
 app.get('/api/health', async (_req, res) => {
-  const db = getDb();
-  if (!db) return res.status(503).json({ error: 'DB not configured' });
   try {
+    const db = getDb();
+    if (!db) return res.status(503).json({
+      error: 'DB not configured',
+      hasEnv: !!(process.env.FIREBASE_SERVICE_ACCOUNT),
+      envLen: (process.env.FIREBASE_SERVICE_ACCOUNT || '').length
+    });
     const snap = await db.collection('people').limit(1).get();
-    res.json({ ok: true, db: !snap.empty });
-  } catch (e) { res.status(503).json({ error: 'DB unreachable' }); }
+    res.json({ ok: true, people: snap.size });
+  } catch (e) {
+    res.status(503).json({ error: 'DB unreachable', detail: e.message });
+  }
 });
 
 // ── Seed ──
@@ -124,7 +130,7 @@ app.post('/api/expenses', async (req, res) => {
       person, amount: parseFloat(amount), paid_amount: 0,
       description, notes: notes || '',
       source_type: source_type || 'credit_card', source_name: source_name || '',
-      created_at: FieldValue.serverTimestamp()
+      created_at: getFieldValue().serverTimestamp()
     };
     const ref = await db.collection('expenses').add(expense);
     res.status(201).json({
@@ -148,9 +154,9 @@ app.post('/api/expenses/:id/pay', async (req, res) => {
   const exp = doc.data();
   const remaining = exp.amount - (exp.paid_amount || 0);
   if (amount > remaining) return res.status(400).json({ error: `Exceeds ₹${remaining.toFixed(2)}` });
-  await db.collection('expenses').doc(req.params.id).update({ paid_amount: FieldValue.increment(parseFloat(amount)) });
+  await db.collection('expenses').doc(req.params.id).update({ paid_amount: getFieldValue().increment(parseFloat(amount)) });
   await db.collection('expenses').doc(req.params.id).collection('payments').add({
-    amount: parseFloat(amount), paid_at: FieldValue.serverTimestamp()
+    amount: parseFloat(amount), paid_at: getFieldValue().serverTimestamp()
   });
   const updated = await db.collection('expenses').doc(req.params.id).get();
   res.json(serialize(updated));
