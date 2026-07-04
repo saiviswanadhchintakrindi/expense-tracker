@@ -12,6 +12,16 @@ export function useReminder() {
 
   useEffect(() => {
     try { setPermission(Notification.permission) } catch {}
+    // Auto-request notification permission on first load
+    const timer = setTimeout(async () => {
+      try {
+        if (Notification.permission === 'default') {
+          const p = await Notification.requestPermission()
+          setPermission(p)
+        }
+      } catch {}
+    }, 5000)
+    return () => clearTimeout(timer)
   }, [])
 
   const loadReminder = useCallback(async () => {
@@ -81,7 +91,7 @@ export function useReminder() {
   return { show, reminderData, dismiss, openPopup, loadReminder, permission, isDailyReminder }
 }
 
-export default function ReminderPopup({ show, reminderData, onDismiss, isDailyReminder }) {
+export default function ReminderPopup({ show, reminderData, onDismiss, isDailyReminder, permission }) {
   if (!show) return null
 
   if (isDailyReminder) {
@@ -112,8 +122,13 @@ export default function ReminderPopup({ show, reminderData, onDismiss, isDailyRe
             OK, I will add
           </button>
           <div style={{ marginTop: 12, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-            Reminds daily at 6 PM, 8 PM &amp; 10 PM
+            Auto-reminds at 6 PM, 8 PM &amp; 10 PM
           </div>
+          {permission === 'default' && (
+            <div style={{ marginTop: 6, fontSize: '0.6875rem', color: 'var(--primary)', fontWeight: 600 }}>
+              Allow notifications for alerts even when tab is closed (Android)
+            </div>
+          )}
         </div>
       </div>
     )

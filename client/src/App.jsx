@@ -57,7 +57,7 @@ export default function App() {
     else if (dx > 0 && idx > 0) navigate(TABS[idx - 1])
   }
 
-  const { show: reminderShow, reminderData, dismiss: dismissReminder, openPopup, isDailyReminder } = useReminder()
+  const { show: reminderShow, reminderData, dismiss: dismissReminder, openPopup, isDailyReminder, permission } = useReminder()
 
   const slideStyle = {
     animation: slide ? `${dir > 0 ? 'slideLeftIn' : 'slideRightIn'} 0.2s ease` : 'none',
@@ -104,7 +104,7 @@ export default function App() {
           </div>
         </div>
       )}
-      <ReminderPopup show={reminderShow} reminderData={reminderData} onDismiss={dismissReminder} isDailyReminder={isDailyReminder} />
+      <ReminderPopup show={reminderShow} reminderData={reminderData} onDismiss={dismissReminder} isDailyReminder={isDailyReminder} permission={permission} />
       {toast && <div className={`toast ${toast.isError ? 'error' : ''}`}>{toast.message}</div>}
     </>
   )
