@@ -222,9 +222,16 @@ app.get('/api/admin/data', async (req, res) => {
 app.post("/api/push/subscribe", async (req, res) => {
   try {
     const total = await push.addSubscription(req.body);
-    res.json({ ok: true, total });
+
+    res.json({
+      ok: true,
+      total
+    });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error(e);
+    res.status(500).json({
+      error: e.message
+    });
   }
 });
 
