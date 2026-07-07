@@ -219,37 +219,50 @@ app.get('/api/admin/data', async (req, res) => {
 });
 
 // ── Push Notifications ──
+// ── Push Notifications ──
 app.post('/api/push/subscribe', (req, res) => {
   try {
     const count = push.addSubscription(req.body);
     res.json({ ok: true, total: count });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/push/unsubscribe', (req, res) => {
   try {
     push.removeSubscription(req.body.endpoint);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/push/stats', (_req, res) => {
   res.json(push.getStats());
 });
 
-app.post('/api/push/send-reminder', async (_req, res) => {
+// Common handler
+const sendReminder = async (_req, res) => {
   try {
     const result = await push.sendToAll({
-      title: '💳 Expense Reminder',
-      body: 'Did you use your credit card today? Record your expenses now!',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      data: { url: '/' },
+      title: "💳 Expense Reminder",
+      body: "Did you use your credit card today? Record your expenses now!",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: { url: "/" },
       requireInteraction: true,
-      tag: 'daily-expense-reminder'
+      tag: "daily-expense-reminder"
     });
+
     res.json(result);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+};
+
+// Support both GET and POST
+app.get('/api/push/send-reminder', sendReminder);
+app.post('/api/push/send-reminder', sendReminder);
 
 module.exports = app;
