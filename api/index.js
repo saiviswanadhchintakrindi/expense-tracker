@@ -219,27 +219,26 @@ app.get('/api/admin/data', async (req, res) => {
 });
 
 // ── Push Notifications ──
-// ── Push Notifications ──
-app.post('/api/push/subscribe', (req, res) => {
+app.post("/api/push/subscribe", async (req, res) => {
   try {
-    const count = push.addSubscription(req.body);
-    res.json({ ok: true, total: count });
+    const total = await push.addSubscription(req.body);
+    res.json({ ok: true, total });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-app.post('/api/push/unsubscribe', (req, res) => {
+app.post("/api/push/unsubscribe", async (req, res) => {
   try {
-    push.removeSubscription(req.body.endpoint);
+    await push.removeSubscription(req.body.endpoint);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-app.get('/api/push/stats', (_req, res) => {
-  res.json(push.getStats());
+app.get("/api/push/stats", async (_req, res) => {
+  res.json(await push.getStats());
 });
 
 // Common handler
