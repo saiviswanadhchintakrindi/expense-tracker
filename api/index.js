@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
+const push = require('./push');
 
 const app = express();
 app.use(cors());
@@ -214,6 +215,40 @@ app.get('/api/admin/data', async (req, res) => {
     }
     const data = await db.collection(collection);
     res.json(data);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── Push Notifications ──
+app.post('/api/push/subscribe', (req, res) => {
+  try {
+    const count = push.addSubscription(req.body);
+    res.json({ ok: true, total: count });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/push/unsubscribe', (req, res) => {
+  try {
+    push.removeSubscription(req.body.endpoint);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/push/stats', (_req, res) => {
+  res.json(push.getStats());
+});
+
+app.post('/api/push/send-reminder', async (_req, res) => {
+  try {
+    const result = await push.sendToAll({
+      title: '💳 Expense Reminder',
+      body: 'Did you use your credit card today? Record your expenses now!',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      data: { url: '/' },
+      requireInteraction: true,
+      tag: 'daily-expense-reminder'
+    });
+    res.json(result);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

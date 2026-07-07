@@ -3,6 +3,15 @@ import { useState, useEffect, useCallback } from 'react'
 const API = '/api'
 const REMINDER_HOURS = [18, 20, 22]
 
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i)
+  return outputArray
+}
+
 export function useReminder() {
   const [show, setShow] = useState(false)
   const [reminderData, setReminder] = useState(null)
@@ -12,12 +21,28 @@ export function useReminder() {
 
   useEffect(() => {
     try { setPermission(Notification.permission) } catch {}
-    // Auto-request notification permission on first load
     const timer = setTimeout(async () => {
       try {
         if (Notification.permission === 'default') {
           const p = await Notification.requestPermission()
           setPermission(p)
+        }
+        if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready
+          let sub = await reg.pushManager.getSubscription()
+          if (!sub) {
+            const vapidPublic = 'BD4E9d6orjB1uAbTlt-_AIjG59MVXSDhg8k9MakTSxCx_wO1C8yqcnrx3qgVfoMx-QymWcyNo-D5F9iLk6kR53o'
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(vapidPublic)
+            })
+          }
+          // Send subscription to backend
+          await fetch(`${API}/push/subscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sub)
+          })
         }
       } catch {}
     }, 5000)

@@ -12,5 +12,19 @@
       "memory": 256,
       "maxDuration": 10
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/push/send-reminder",
+      "schedule": "30 12 * * *"
+    },
+    {
+      "path": "/api/push/send-reminder",
+      "schedule": "30 14 * * *"
+    },
+    {
+      "path": "/api/push/send-reminder",
+      "schedule": "30 16 * * *"
+    }
+  ]
 }
