@@ -140,10 +140,32 @@ async function addSubDoc(parentCol, parentId, subCol, obj) {
 
 async function setDoc(collectionName, docId, obj) {
   const body = { fields: toFields(obj) };
-  await firestore('POST', `/${collectionName}?documentId=${encodeURIComponent(docId)}`, body);
+
+  try {
+    // Try updating the document first
+    await firestore(
+      "PATCH",
+      `/${collectionName}/${encodeURIComponent(docId)}`,
+      body
+    );
+  } catch (e) {
+    // If it doesn't exist, create it
+    if (
+      e.message.includes("NOT_FOUND") ||
+      e.message.includes("404")
+    ) {
+      await firestore(
+        "POST",
+        `/${collectionName}?documentId=${encodeURIComponent(docId)}`,
+        body
+      );
+    } else {
+      throw e;
+    }
+  }
+
   return { id: docId, ...obj };
 }
-
 module.exports = {
   collection, getDoc, addDoc, updateDoc, deleteDoc,
   listSubcollection, addSubDoc, setDoc, getConfig
