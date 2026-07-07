@@ -1,46 +1,99 @@
-const webpush = require('web-push');
+const webpush = require("web-push");
+const db = require("./db");
 
-const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY || '';
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || '';
+const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY || "";
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || "";
 
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
-  webpush.setVapidDetails('mailto:expense@tracker.app', VAPID_PUBLIC, VAPID_PRIVATE);
+  webpush.setVapidDetails(
+    "mailto:expense@tracker.app",
+    VAPID_PUBLIC,
+    VAPID_PRIVATE
+  );
 }
 
-const subscriptions = [];
+const COLLECTION = "pushSubscriptions";
 
-function addSubscription(sub) {
-  const exists = subscriptions.find(s => s.endpoint === sub.endpoint);
-  if (!exists) subscriptions.push(sub);
-  return subscriptions.length;
+function endpointId(endpoint) {
+  return encodeURIComponent(endpoint);
 }
 
-function removeSubscription(endpoint) {
-  const idx = subscriptions.findIndex(s => s.endpoint === endpoint);
-  if (idx >= 0) subscriptions.splice(idx, 1);
+async function addSubscription(sub) {
+  const id = endpointId(sub.endpoint);
+
+  await db.setDoc(COLLECTION, id, {
+    endpoint: sub.endpoint,
+    keys: JSON.stringify(sub.keys)
+  });
+
+  const stats = await getStats();
+  return stats.subscriptions;
+}
+
+async function removeSubscription(endpoint) {
+  try {
+    await db.deleteDoc(COLLECTION, endpointId(endpoint));
+  } catch (_) {}
+}
+
+async function getSubscriptions() {
+  const docs = await db.collection(COLLECTION);
+
+  return docs.map(doc => ({
+    endpoint: doc.endpoint,
+    keys: JSON.parse(doc.keys)
+  }));
 }
 
 async function sendToAll(payload) {
-  if (!VAPID_PUBLIC) return { sent: 0, error: 'VAPID keys not configured' };
-  const str = JSON.stringify(payload);
-  let sent = 0, failed = 0;
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
+    return {
+      sent: 0,
+      failed: 0,
+      total: 0,
+      error: "VAPID keys not configured"
+    };
+  }
 
-  const toRemove = [];
-  for (const sub of [...subscriptions]) {
+  const subscriptions = await getSubscriptions();
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const sub of subscriptions) {
     try {
-      await webpush.sendNotification(sub, str);
+      await webpush.sendNotification(sub, JSON.stringify(payload));
       sent++;
     } catch (e) {
-      if (e.statusCode === 410 || e.statusCode === 404) toRemove.push(sub.endpoint);
-      else failed++;
+      failed++;
+
+      if (e.statusCode === 404 || e.statusCode === 410) {
+        await removeSubscription(sub.endpoint);
+      }
+
+      console.error(e);
     }
   }
-  toRemove.forEach(removeSubscription);
-  return { sent, failed, total: subscriptions.length };
+
+  return {
+    sent,
+    failed,
+    total: subscriptions.length
+  };
 }
 
-function getStats() {
-  return { subscriptions: subscriptions.length, hasVapidKeys: !!(VAPID_PUBLIC && VAPID_PRIVATE) };
+async function getStats() {
+  const docs = await db.collection(COLLECTION);
+
+  return {
+    subscriptions: docs.length,
+    hasVapidKeys: !!(VAPID_PUBLIC && VAPID_PRIVATE)
+  };
 }
 
-module.exports = { addSubscription, removeSubscription, sendToAll, getStats };
+module.exports = {
+  addSubscription,
+  removeSubscription,
+ sendToAll,
+  getStats
+};
