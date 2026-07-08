@@ -15,7 +15,7 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
 const COLLECTION = "pushSubscriptions";
 
 function endpointId(endpoint) {
-  return encodeURIComponent(endpoint);
+  return endpoint;
 }
 
 async function addSubscription(sub) {
