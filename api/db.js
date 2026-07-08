@@ -125,7 +125,10 @@ async function updateDoc(collectionName, docId, obj) {
 }
 
 async function deleteDoc(collectionName, docId) {
-  await firestore('DELETE', `/${collectionName}/${docId}`);
+  await firestore(
+    "DELETE",
+    `/${collectionName}/${encodeURIComponent(docId)}`
+  );
 }
 
 async function listSubcollection(parentCol, parentId, subCol) {
